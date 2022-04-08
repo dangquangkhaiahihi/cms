@@ -7,6 +7,8 @@ import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Document(collection = "sa_user")
@@ -17,14 +19,23 @@ public class UserDoc {
     @Id
     private Long id;
     private String email;
-    private String password;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     private String firstName;
     private String lastName;
     private String phoneNumber;
+    private LocalDateTime dob;
+    private String socialSecurityNum;
+
+    private String password;
     private Integer enabled;
-    private Integer failCount = 0;
+    private Integer resetPass;
+    private Integer failCount;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private String createdBy;
+    private String updatedBy;
+
+    private List<String> areaCodes = new ArrayList<>();
 
     @DBRef
     private RoleDoc role;
