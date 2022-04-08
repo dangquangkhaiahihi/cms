@@ -1,5 +1,6 @@
 package com.management.cms;
 
+import com.management.cms.model.enitity.UserDoc;
 import com.management.cms.repository.PermissionRepository;
 import com.management.cms.repository.RoleRepository;
 import com.management.cms.repository.UserRepository;
@@ -86,6 +87,9 @@ public class CmsApplication {
 //		user.setRole(role);
 //		user.setId(generatorSeqService.getNextSequenceId(user.SEQUENCE_NAME));
 //		userRepository.save(user);
+		UserDoc userDoc = userRepository.findByEmail("sub_admin@gmail.com").get();
+		userDoc.setFailCount(0);
+		userRepository.save(userDoc);
 	}
 
 }

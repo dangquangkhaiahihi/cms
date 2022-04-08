@@ -24,6 +24,7 @@ public class UserDoc {
     private String lastName;
     private String phoneNumber;
     private Integer enabled;
+    private Integer failCount = 0;
 
     @DBRef
     private RoleDoc role;
