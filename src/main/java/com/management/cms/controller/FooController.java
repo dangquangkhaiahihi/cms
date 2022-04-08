@@ -10,18 +10,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/")
 public class FooController {
-    @PreAuthorize("@PermissionServiceImpl.isBusinessPremisesView")
+    @PreAuthorize("@permissionServiceImpl.businessPremisesView")
     @GetMapping("/view")
     public String viewTest(){
         return "VIEW";
     }
 
-    @PreAuthorize("@PermissionServiceImpl.isBusinessPremisesCreate")
+    @PreAuthorize("@permissionServiceImpl.businessPremisesCreate")
     @GetMapping("/create")
     public String createTest(){
         return "CREATE";
     }
-    @PreAuthorize("@PermissionServiceImpl.isBusinessPremisesEdit")
+
+    @PreAuthorize("@permissionServiceImpl.businessPremisesEdit")
     @GetMapping("/edit")
     public String editTest(){
         return "EDIT";

@@ -7,9 +7,11 @@ import com.management.cms.model.enitity.UserDoc;
 import com.management.cms.security.UserDetailsImpl;
 import com.management.cms.service.PermissionService;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
 public class PermissionServiceImpl implements PermissionService {
     @Override
     public boolean isBusinessPremisesView() {

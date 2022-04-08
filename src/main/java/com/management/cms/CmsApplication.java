@@ -1,10 +1,5 @@
 package com.management.cms;
 
-import com.management.cms.constant.Commons;
-import com.management.cms.constant.EPermission;
-import com.management.cms.model.enitity.PermissionDoc;
-import com.management.cms.model.enitity.RoleDoc;
-import com.management.cms.model.enitity.UserDoc;
 import com.management.cms.repository.PermissionRepository;
 import com.management.cms.repository.RoleRepository;
 import com.management.cms.repository.UserRepository;
@@ -16,8 +11,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.annotation.PostConstruct;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @SpringBootApplication
 @EnableMongoRepositories
