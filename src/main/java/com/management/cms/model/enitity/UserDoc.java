@@ -35,7 +35,8 @@ public class UserDoc {
     private String createdBy;
     private String updatedBy;
 
-    private List<String> areaCodes = new ArrayList<>();
+    @DBRef
+    private List<AreaDoc> areas = new ArrayList<>();
 
     @DBRef
     private RoleDoc role;

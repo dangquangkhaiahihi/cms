@@ -3,6 +3,8 @@ package com.management.cms.service.implement;
 import com.management.cms.constant.Commons;
 import com.management.cms.constant.ESystemEmail;
 import com.management.cms.model.dto.UserDto;
+import com.management.cms.model.enitity.AreaDoc;
+import com.management.cms.model.enitity.RoleDoc;
 import com.management.cms.model.enitity.UserDoc;
 import com.management.cms.model.request.UserSaveRequest;
 import com.management.cms.model.request.UserSearchRequest;
@@ -11,25 +13,30 @@ import com.management.cms.repository.RoleRepository;
 import com.management.cms.repository.UserRepository;
 import com.management.cms.service.GeneratorSeqService;
 import com.management.cms.service.UserService;
+import com.management.cms.utils.Utils;
 import com.management.cms.utils.WebUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class UserServiceImpl implements UserService {
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @Autowired
     UserRepository userRepository;
@@ -46,59 +53,185 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private GeneratorSeqService generatorSeqService;
 
+    Utils utils = new Utils();
+
     @Override
     public void createNewUser(UserSaveRequest userSaveRequest) throws Exception{
         //validate input
         userSaveRequest.validateInput();
         //check area code có hợp lệ ko
+        if(userSaveRequest.getAreaCodes().isEmpty()){
+            throw new Exception("Không được để trống mã khu vực");
+        }
+        if(userSaveRequest.getAreaCodes().size() > 1){
+            throw new Exception("Không thể chỉ định người dùng quản lý nhiều hơn 1 khu vực");
+        }
         for(String areaCode : userSaveRequest.getAreaCodes()){
-            if(areaRepository.existsByCode(areaCode)){
+            if(!areaRepository.existsByCode(areaCode)){
                 throw new Exception("Mã khu vực không hợp lệ : " + areaCode);
             }
         }
 
+        AreaDoc areaDoc = areaRepository.findByCode(userSaveRequest.getAreaCodes().get(0));
+
         //tạo đối tượng
         UserDoc userDoc = new UserDoc();
         BeanUtils.copyProperties(userSaveRequest, userDoc);
+
+        LocalDateTime dob = utils.convertStringToLocalDateTime01(userSaveRequest.getDob());
+        userDoc.setDob(dob);
 
         userDoc.setPassword(passwordEncoder.encode(Commons.DEFAULT_PASSWORD));
         userDoc.setEnabled(Commons.STATUS_ACTIVE);
         userDoc.setResetPass(Commons.HAVE_NOT_RESET_PASS);
         userDoc.setFailCount(0);
 
-//        //Sau này bổ sung current user để set CreateBy và set UpdateBy
-//        UserDoc currentUser = WebUtils.getCurrentUser();
-//        userDoc.setCreatedBy(currentUser.getEmail());
-//        userDoc.setUpdatedBy(currentUser.getEmail());
+        //Sau này bổ sung current user để set CreateBy và set UpdateBy sau
+//        (cái này đã hoạt động nhé, tắt đi để test cho dễ)
+        UserDoc currentUser = WebUtils.getCurrentUser().getUser();
+        userDoc.setCreatedBy(currentUser.getEmail());
+        userDoc.setUpdatedBy(currentUser.getEmail());
         userDoc.setCreatedAt(LocalDateTime.now());
         userDoc.setUpdatedAt(LocalDateTime.now());
+
+        userDoc.getAreas().add(areaDoc);
 
         userDoc.setRole(roleRepository.findByCode("USER").get());
         //SET ID CHO PARTNER TRƯỚC KHI LƯU
         userDoc.setId(generatorSeqService.getNextSequenceId(userDoc.SEQUENCE_NAME));
         userRepository.save(userDoc);
 
-        //Gửi mail tạo tài khoản cho user
-        Map<String, Object> map = new HashMap<>();
-        map.put("fullName", userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()));
-        map.put("username", userDoc.getEmail());
-        map.put("password", Commons.DEFAULT_PASSWORD);
-        sendMailToUser(userDoc.getEmail(), null, map, ESystemEmail.MAIL_CREATE_ACCOUNT);
+//        //Gửi mail tạo tài khoản cho user (chưa hoạt động)
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("fullName", userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()));
+//        map.put("username", userDoc.getEmail());
+//        map.put("password", Commons.DEFAULT_PASSWORD);
+//        sendMailToUser(userDoc.getEmail(), null, map, ESystemEmail.MAIL_CREATE_ACCOUNT);
     }
 
     @Override
-    public void editUser(UserSaveRequest userSaveRequest) {
+    public void editUser(UserSaveRequest userSaveRequest, Long id) throws Exception{
+        //không được thay đổi id
+        if(id != userSaveRequest.getId()) throw new Exception("Không được thay đổi id");
 
+        //check id truyền vào có trong DB ko
+        Optional<UserDoc> optional = userRepository.findById(id);
+        if (!optional.isPresent()){
+            throw new Exception("Id không hợp lệ.");
+        }
+
+        //validate input
+        userSaveRequest.validateInput();
+        //check area code có hợp lệ ko
+        if(userSaveRequest.getAreaCodes().isEmpty()){
+            throw new Exception("Không được để trống mã khu vực");
+        }
+        if(userSaveRequest.getAreaCodes().size() > 1){
+            throw new Exception("Không thể chỉ định người dùng quản lý nhiều hơn 1 khu vực");
+        }
+        for(String areaCode : userSaveRequest.getAreaCodes()){
+            if(!areaRepository.existsByCode(areaCode)){
+                throw new Exception("Mã khu vực không hợp lệ : " + areaCode);
+            }
+        }
+
+        //tạo đối tượng
+        UserDoc userDoc = optional.get();
+        BeanUtils.copyProperties(userSaveRequest, userDoc);
+
+        LocalDateTime dob = utils.convertStringToLocalDateTime01(userSaveRequest.getDob());
+        userDoc.setDob(dob);
+
+//        //Sau này bổ sung current user để set CreateBy và set UpdateBy sau
+//        (cái này đã hoạt động nhé, tắt đi để test cho dễ)
+        UserDoc currentUser = WebUtils.getCurrentUser().getUser();
+        userDoc.setCreatedBy(currentUser.getEmail());
+        userDoc.setUpdatedBy(currentUser.getEmail());
+        userDoc.setCreatedAt(LocalDateTime.now());
+        userDoc.setUpdatedAt(LocalDateTime.now());
+
+        //thay đổi khu vực nếu có
+        if(!userDoc.getAreas().get(0).getCode().equals(userSaveRequest.getAreaCodes().get(0))){
+            AreaDoc areaDoc = areaRepository.findByCode(userSaveRequest.getAreaCodes().get(0));
+            userDoc.getAreas().remove(0);
+            userDoc.getAreas().add(areaDoc);
+        }
+
+        userRepository.save(userDoc);
     }
 
     @Override
-    public Page<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Pageable pageable) {
-        return null;
+    public Page<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Pageable pageable) throws Exception{
+        Query query = new Query();
+
+        if (!StringUtils.isEmpty(userSearchRequest.getEmail().toLowerCase().trim())) {
+            query.addCriteria(Criteria.where("email").regex(".*"+userSearchRequest.getEmail().toLowerCase().trim()+".*", "i"));
+        }
+
+        if (!StringUtils.isEmpty(userSearchRequest.getPhoneNumber().toLowerCase().trim())) {
+            query.addCriteria(Criteria.where("phoneNumber").regex(".*"+userSearchRequest.getPhoneNumber().toLowerCase().trim()+".*", "i"));
+        }
+
+        if (!StringUtils.isEmpty(userSearchRequest.getSocialSecurityNum().toLowerCase().trim())) {
+            query.addCriteria(Criteria.where("socialSecurityNum").regex(".*"+userSearchRequest.getSocialSecurityNum().toLowerCase().trim()+".*", "i"));
+        }
+
+        if (!StringUtils.isEmpty(userSearchRequest.getRole().toLowerCase().trim())) {
+            Optional<RoleDoc> optionalRole = roleRepository.findByCode(userSearchRequest.getRole());
+            if(!optionalRole.isPresent()) throw new Exception("Mã role không hợp lệ");
+            RoleDoc roleDoc = optionalRole.get();
+            query.addCriteria(Criteria.where("role").is(roleDoc));
+        }
+
+        if (!StringUtils.isEmpty(userSearchRequest.getArea().toLowerCase().trim())) {
+            AreaDoc areaDoc = areaRepository.findByCode(userSearchRequest.getArea());
+            if(areaDoc == null) throw new Exception("Mã khu vực không hợp lệ");
+            query.addCriteria(Criteria.where("areas").is(areaDoc));
+        }
+
+        if (userSearchRequest.getEnabled() != 2) {
+            query.addCriteria(Criteria.where("enabled").is(userSearchRequest.getEnabled()));
+        }
+
+        List<UserDoc> queryResults = mongoTemplate.find(query, UserDoc.class);
+
+        List<UserDto> returnResults = new ArrayList<>();
+
+        Long total = Long.valueOf(queryResults.size());
+        for(UserDoc userDoc : queryResults){
+            UserDto userDto = new UserDto();
+            BeanUtils.copyProperties(userDoc, userDto);
+            userDto.setFullName(userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()));
+            if(userDoc.getDob() != null) userDto.setDob(utils.convertDateToString(userDoc.getDob()));
+            for(AreaDoc areaDoc : userDoc.getAreas()){
+                userDto.getAreas().add(areaDoc.getCode());
+            }
+            userDto.setRole(userDoc.getRole().getCode());
+            userDto.setStatus(userDoc.getEnabled());
+            returnResults.add(userDto);
+        }
+        return new PageImpl<>(returnResults, pageable, total);
     }
 
     @Override
-    public UserDto getUserDetailById(Long id) {
-        return null;
+    public UserDto getUserDetailById(Long id) throws Exception{
+        Optional<UserDoc> optional = userRepository.findById(id);
+        if (!optional.isPresent()) {
+            throw new Exception("Id không hợp lệ.");
+        }
+        UserDoc userDoc = optional.get();
+
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userDoc, userDto);
+        userDto.setFullName(userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()));
+        if(userDoc.getDob() != null) userDto.setDob(utils.convertDateToString(userDoc.getDob()));
+        for(AreaDoc areaDoc : userDoc.getAreas()){
+            userDto.getAreas().add(areaDoc.getCode());
+        }
+        userDto.setRole(userDoc.getRole().getCode());
+        userDto.setStatus(userDoc.getEnabled());
+
+        return userDto;
     }
 
     @Override
@@ -124,7 +257,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void lockAndUnlockById(Long id) throws Exception {
-
+    public String lockAndUnlockById(Long id) throws Exception {
+        String message = "";
+        Optional<UserDoc> optional = userRepository.findById(id);
+        if (!optional.isPresent()) {
+            throw new Exception("Id không hợp lệ.");
+        }
+        UserDoc userDoc = optional.get();
+        if(userDoc.getEnabled() == Commons.STATUS_ACTIVE){
+            userDoc.setEnabled(Commons.STATUS_INACTIVE);
+            message = "Khóa người dùng thành công";
+        }else{
+            userDoc.setEnabled(Commons.STATUS_ACTIVE);
+            message = "Mở khóa người dùng thành công";
+        }
+        userRepository.save(userDoc);
+        return message;
     }
 }

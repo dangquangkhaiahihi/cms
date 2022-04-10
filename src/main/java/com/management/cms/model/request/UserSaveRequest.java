@@ -18,10 +18,8 @@ public class UserSaveRequest {
     private String lastName;
     @NotBlank(message = "Số điện thoại không được trống")
     private String phoneNumber;
-    @NotBlank(message = "Khu vực phụ trách không được trống")
-    private String areaCode;
     @NotBlank(message = "Ngày sinh không được trống")
-    private LocalDateTime dob;
+    private String dob;
     @NotBlank(message = "Số căn cước công dân không được trống")
     private String socialSecurityNum;
 

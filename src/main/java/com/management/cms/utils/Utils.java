@@ -1,6 +1,7 @@
 package com.management.cms.utils;
 
 import com.google.gson.*;
+import com.management.cms.constant.Commons;
 import com.management.cms.security.UserDetailsImpl;
 import com.management.cms.model.enitity.UserDoc;
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +16,9 @@ import java.lang.reflect.Type;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -119,18 +123,18 @@ public class Utils {
         return request.getRemoteAddr();
     }
 
-//    public static LocalDateTime convertStringToLocalDateTime01(String source) {
-//        try {
-//            return Commons.DATE_FORMAT_01.parse(source).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        return null;
-//    }
-//
-//    public static String convertDateToString(LocalDateTime date) {
-//        return date.format(DateTimeFormatter.ofPattern(Commons.OUTPUT_DATE_FORMAT));
-//    }
+    public static LocalDateTime convertStringToLocalDateTime01(String source) {
+        try {
+            return Commons.DATE_FORMAT_01.parse(source).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String convertDateToString(LocalDateTime date) {
+        return date.format(DateTimeFormatter.ofPattern(Commons.OUTPUT_DATE_FORMAT));
+    }
 //
 //    public static LocalDateTime convertStringToDate(String date) {
 //        return LocalDateTime.parse(date, DateTimeFormatter.ofPattern(Commons.INPUT_DATE_FORMAT));

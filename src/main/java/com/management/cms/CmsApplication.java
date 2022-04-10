@@ -1,6 +1,8 @@
 package com.management.cms;
 
+import com.management.cms.model.enitity.AreaDoc;
 import com.management.cms.model.enitity.UserDoc;
+import com.management.cms.repository.AreaRepository;
 import com.management.cms.repository.PermissionRepository;
 import com.management.cms.repository.RoleRepository;
 import com.management.cms.repository.UserRepository;
@@ -12,6 +14,7 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.annotation.PostConstruct;
+import java.util.List;
 
 @SpringBootApplication
 @EnableMongoRepositories
@@ -24,6 +27,9 @@ public class CmsApplication {
 
 	@Autowired
 	private UserRepository userRepository;
+
+	@Autowired
+	private AreaRepository areaRepository;
 
 	@Autowired
 	private RoleRepository roleRepository;
@@ -87,9 +93,6 @@ public class CmsApplication {
 //		user.setRole(role);
 //		user.setId(generatorSeqService.getNextSequenceId(user.SEQUENCE_NAME));
 //		userRepository.save(user);
-		UserDoc userDoc = userRepository.findByEmail("sub_admin@gmail.com").get();
-		userDoc.setFailCount(0);
-		userRepository.save(userDoc);
 	}
 
 }

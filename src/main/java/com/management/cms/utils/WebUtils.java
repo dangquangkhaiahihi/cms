@@ -1,10 +1,14 @@
 package com.management.cms.utils;
 
+import com.management.cms.security.UserDetailsImpl;
 import com.mifmif.common.regex.Generex;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 public class WebUtils {
@@ -31,5 +35,15 @@ public class WebUtils {
     public static String genderRandomByRegex(String regex) {
         Generex generex = new Generex(regex);
         return generex.random();
+    }
+
+    public static UserDetailsImpl getCurrentUser() {
+        UserDetailsImpl userPrincipal = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return userPrincipal;
+    }
+
+    public static long getTimeStamp(LocalDateTime localDateTime) {
+        if (localDateTime == null) return 0;
+        return localDateTime.toEpochSecond(ZoneOffset.UTC) - 7 * 60 * 60;
     }
 }

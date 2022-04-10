@@ -7,4 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AreaRepository extends MongoRepository<AreaDoc, Long> {
     Boolean existsByCode(String code);
+    AreaDoc findByCode(String code);
 }

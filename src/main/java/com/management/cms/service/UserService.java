@@ -13,9 +13,9 @@ import java.util.Set;
 public interface UserService {
     void createNewUser(UserSaveRequest userSaveRequest) throws Exception;
 
-    void editUser(UserSaveRequest userSaveRequest) throws Exception;
+    void editUser(UserSaveRequest userSaveRequest,Long id) throws Exception;
 
-    Page<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Pageable pageable);
+    Page<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Pageable pageable) throws Exception;
 
     UserDto getUserDetailById(Long id) throws Exception;
 
@@ -23,5 +23,5 @@ public interface UserService {
 
     void updateLastLoginAndFailCount(String username, Boolean status);
 
-    void lockAndUnlockById(Long id) throws Exception;
+    String lockAndUnlockById(Long id) throws Exception;
 }
