@@ -2,27 +2,26 @@ package com.management.cms.service.implement;
 
 import com.management.cms.constant.Commons;
 import com.management.cms.constant.ESystemEmail;
+import com.management.cms.exception.OldPasswordIsWrongException;
+import com.management.cms.exception.RePasswordWrongException;
+import com.management.cms.exception.UsedInLastThreeTimePasswordException;
 import com.management.cms.model.dto.UserDto;
-import com.management.cms.model.enitity.AreaDoc;
-import com.management.cms.model.enitity.RoleDoc;
-import com.management.cms.model.enitity.UserDoc;
+import com.management.cms.model.enitity.*;
+import com.management.cms.model.request.ChangePassRequest;
 import com.management.cms.model.request.UserSaveRequest;
 import com.management.cms.model.request.UserSearchRequest;
-import com.management.cms.repository.AreaRepository;
-import com.management.cms.repository.RoleRepository;
-import com.management.cms.repository.UserRepository;
+import com.management.cms.repository.*;
 import com.management.cms.service.GeneratorSeqService;
 import com.management.cms.service.UserService;
 import com.management.cms.utils.Utils;
 import com.management.cms.utils.WebUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -52,6 +51,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private GeneratorSeqService generatorSeqService;
+
+    @Autowired
+    PasswordResetRepository passwordResetRepository;
+
+    @Autowired
+    AccessTokenMgoRepository accessTokenMgoRepository;
 
     Utils utils = new Utils();
 
@@ -86,8 +91,7 @@ public class UserServiceImpl implements UserService {
         userDoc.setResetPass(Commons.HAVE_NOT_RESET_PASS);
         userDoc.setFailCount(0);
 
-        //Sau này bổ sung current user để set CreateBy và set UpdateBy sau
-//        (cái này đã hoạt động nhé, tắt đi để test cho dễ)
+        //current user để set CreateBy và set UpdateBy sau
         UserDoc currentUser = WebUtils.getCurrentUser().getUser();
         userDoc.setCreatedBy(currentUser.getEmail());
         userDoc.setUpdatedBy(currentUser.getEmail());
@@ -142,8 +146,7 @@ public class UserServiceImpl implements UserService {
         LocalDateTime dob = utils.convertStringToLocalDateTime01(userSaveRequest.getDob());
         userDoc.setDob(dob);
 
-//        //Sau này bổ sung current user để set CreateBy và set UpdateBy sau
-//        (cái này đã hoạt động nhé, tắt đi để test cho dễ)
+        //current user để set CreateBy và set UpdateBy sau
         UserDoc currentUser = WebUtils.getCurrentUser().getUser();
         userDoc.setCreatedBy(currentUser.getEmail());
         userDoc.setUpdatedBy(currentUser.getEmail());
@@ -274,4 +277,111 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userDoc);
         return message;
     }
+
+    @Override
+    public void resetPassword(Long id) throws Exception{
+        UserDoc userDoc = userRepository.findById(id).get();
+        if (userDoc == null) throw new Exception("Id không hợp lệ.");
+
+        UserDoc currentUser = WebUtils.getCurrentUser().getUser();
+
+        PasswordResetDoc passwordResetDoc = new PasswordResetDoc();
+        passwordResetDoc.setUserDocEmail(userDoc.getEmail());
+        passwordResetDoc.setPasswordOld(userDoc.getPassword());
+        passwordResetDoc.setCreatedByEmail(currentUser.getEmail());
+        passwordResetDoc.setCreatedDate(LocalDateTime.now());
+        passwordResetDoc.setId(generatorSeqService.getNextSequenceId(passwordResetDoc.SEQUENCE_NAME));
+
+        passwordResetRepository.save(passwordResetDoc);
+
+        String passwordGender = WebUtils.genderRandomByRegex(Commons.REGEX_GEN_PASSWORD);
+        userDoc.setPassword(passwordEncoder.encode(passwordGender));
+        userDoc.setResetPass(Commons.HAVE_NOT_RESET_PASS);
+        userDoc.setUpdatedBy(currentUser.getEmail());
+        userDoc.setUpdatedAt(LocalDateTime.now());
+        userDoc.setEnabled(Commons.STATUS_ACTIVE);
+        userDoc.setFailCount(0);
+        userRepository.save(userDoc);
+        logger.info("PASSWORD NEW===: {}", passwordGender);
+
+        //Sau khi reset pass thì xóa access token của người dùng đi -> Nếu người này đã đăng nhâp,
+        //sau đó admin reset pass, thì người này phải đăng nhập lại để có token mới
+
+
+//        //Gửi mail reset pass tài khoản cho user (chưa hoạt động)
+//        Map<String, Object> map = new HashMap<>();
+//        map.put("fullName", userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()));
+//        map.put("username", userDoc.getEmail());
+//        map.put("password", Commons.DEFAULT_PASSWORD);
+//        sendMailToUser(userDoc.getEmail(), null, map, ESystemEmail.MAIL_RESET_PASS);
+    }
+
+    @Override
+    public String changePassword(ChangePassRequest changePassRequest) throws Exception{
+        try{
+            UserDoc currentUser = WebUtils.getCurrentUser().getUser();
+            if (!passwordEncoder.matches(changePassRequest.getPasswordOld().trim(), currentUser.getPassword())) {
+                throw new OldPasswordIsWrongException("Mật khẩu cũ không chính xác");
+            }
+            if(!changePassRequest.getPasswordNew().equals(changePassRequest.getRePassword())){
+                throw new RePasswordWrongException("Nhập lại mật khẩu không chính xác");
+            }
+            List<PasswordResetDoc> passwordResets = findTop3ByUserEmail(currentUser.getEmail());
+            for (PasswordResetDoc pass : passwordResets) {
+                if (passwordEncoder.matches(changePassRequest.getPasswordNew(), pass.getPasswordOld())) {
+                    throw new UsedInLastThreeTimePasswordException("Bạn đã sử dụng mật khẩu này. Vui lòng sử dụng mật khẩu khác");
+                }
+            }
+            currentUser.setPassword(passwordEncoder.encode(changePassRequest.getPasswordNew()));
+            currentUser.setEnabled(Commons.STATUS_ACTIVE);
+            currentUser.setResetPass(Commons.DID_RESET_PASS);
+            currentUser.setUpdatedBy(currentUser.getEmail());
+            currentUser.setUpdatedAt(LocalDateTime.now());
+            userRepository.save(currentUser);
+
+            PasswordResetDoc passwordResetDoc = new PasswordResetDoc();
+            passwordResetDoc.setUserDocEmail(currentUser.getEmail());
+            passwordResetDoc.setPasswordOld(currentUser.getPassword());
+            passwordResetDoc.setCreatedByEmail(currentUser.getEmail());
+            passwordResetDoc.setCreatedDate(LocalDateTime.now());
+            passwordResetDoc.setId(generatorSeqService.getNextSequenceId(passwordResetDoc.SEQUENCE_NAME));
+
+            passwordResetRepository.save(passwordResetDoc);
+
+            return "Thay đổi mật khẩu thành công";
+        }
+        catch (OldPasswordIsWrongException e){
+            throw e;
+        }
+        catch (RePasswordWrongException e){
+            throw e;
+        }
+        catch (UsedInLastThreeTimePasswordException e){
+            throw e;
+        }
+        catch (Exception e){
+            throw new Exception("Người dùng chưa đăng nhập thành công");
+        }
+    }
+
+    @Override
+    public void logout(String token) {
+        AccessTokenMgo accessTokenMgo = accessTokenMgoRepository.findByToken(token);
+        if (accessTokenMgo != null){
+            accessTokenMgoRepository.delete(accessTokenMgo);
+        }
+    }
+
+    private List<PasswordResetDoc> findTop3ByUserEmail(String email) {
+        Query query = new Query();
+
+        query.addCriteria(Criteria.where("userDocEmail").regex(".*"+email.toLowerCase().trim()+".*", "i"));
+        query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
+        query.limit(3);
+        List<PasswordResetDoc> queryResults = mongoTemplate.find(query, PasswordResetDoc.class);
+
+        return queryResults;
+    }
+
+
 }

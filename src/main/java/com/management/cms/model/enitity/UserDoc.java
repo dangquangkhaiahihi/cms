@@ -35,10 +35,10 @@ public class UserDoc {
     private String createdBy;
     private String updatedBy;
 
-    @DBRef
+    @DBRef(lazy = true)
     private List<AreaDoc> areas = new ArrayList<>();
 
-    @DBRef
+    @DBRef(lazy = true)
     private RoleDoc role;
 }
 

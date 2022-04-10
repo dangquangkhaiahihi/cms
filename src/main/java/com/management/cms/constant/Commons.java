@@ -16,15 +16,15 @@ public class Commons {
 
     public static final String DEFAULT_PASSWORD = "123456zx";
 
-    public static final Integer HAVE_WAITING_PACKAGE = 1;
-    public static final Integer DO_NOT_HAVE_WAITING_PACKAGE = 0;
-
     public static final Integer HAVE_NOT_RESET_PASS = 0;
     public static final Integer DID_RESET_PASS = 1;
+
 
     public static final String DATE_TIME_VN = "dd-MM-yyyy HH:mm:ss";
     public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy");
     public static final SimpleDateFormat DATE_FORMAT_01 = new SimpleDateFormat("yyyy-MM-dd");
     public static final String OUTPUT_DATE_FORMAT = "yyyy-MM-dd";
     public static final String INPUT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
+    public static final String REGEX_GEN_PASSWORD = "[a-z][a-z][A-Z][A-Z][0-9][`!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?~]";
 }

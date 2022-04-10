@@ -24,7 +24,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if(!optionalUser.isPresent()) throw new UsernameNotFoundException("Tên đăng nhập hoặc mật khẩu sai");
         UserDoc user = optionalUser.get();
         log.info("get user by: {}", email);
-        log.info("user: {}", Utils.getWmfGson().toJson(user));
+//        log.info("user: {}", Utils.getWmfGson().toJson(user));
+        log.info("user: {}", user.toString());
         return UserDetailsImpl.build(user);
     }
 }

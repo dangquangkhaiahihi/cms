@@ -2,6 +2,7 @@ package com.management.cms.service;
 
 import com.management.cms.constant.ESystemEmail;
 import com.management.cms.model.dto.UserDto;
+import com.management.cms.model.request.ChangePassRequest;
 import com.management.cms.model.request.UserSaveRequest;
 import com.management.cms.model.request.UserSearchRequest;
 import org.springframework.data.domain.Page;
@@ -24,4 +25,10 @@ public interface UserService {
     void updateLastLoginAndFailCount(String username, Boolean status);
 
     String lockAndUnlockById(Long id) throws Exception;
+
+    void resetPassword(Long id) throws Exception;
+
+    String changePassword(ChangePassRequest changePassRequest) throws Exception;
+
+    void logout(String token);
 }

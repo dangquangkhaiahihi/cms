@@ -10,10 +10,11 @@ import com.management.cms.model.request.LoginRequest;
 import com.management.cms.model.response.BaseResponse;
 import com.management.cms.model.response.JwtResponse;
 import com.management.cms.model.response.ResponseAuthJwt;
+import com.management.cms.repository.AccessTokenMgoRepository;
 import com.management.cms.repository.RoleRepository;
 import com.management.cms.repository.UserRepository;
 import com.management.cms.security.UserDetailsImpl;
-import com.management.cms.service.AccessTokenService;
+import com.management.cms.service.GeneratorSeqService;
 import com.management.cms.service.UserService;
 import com.management.cms.utils.JwtUtils;
 import com.management.cms.utils.Utils;
@@ -60,7 +61,9 @@ public class LoginController extends BaseController {
     PasswordEncoder passwordEncoder;
     private Gson gson = Utils.getWmfGson();
     @Autowired
-    private AccessTokenService accessTokenService;
+    private AccessTokenMgoRepository accessTokenMgoRepository;
+    @Autowired
+    private GeneratorSeqService generatorSeqService;
 
 
     @PostMapping("/login")
@@ -97,12 +100,25 @@ public class LoginController extends BaseController {
             LocalDateTime currentDate = LocalDateTime.now();
 
             AccessTokenMgo accessTokenMgo= new AccessTokenMgo();
-            accessTokenMgo.setToken(token);
-            accessTokenMgo.setClientIp(Utils.getRequestIP(request));
-            accessTokenMgo.setUserId(userDoc.getId());
-            accessTokenMgo.setExpireDate(currentDate.plusDays(1));
-            accessTokenMgo.setStatus(Commons.STATUS_ACTIVE);
-            accessTokenService.save(accessTokenMgo);
+            Optional<AccessTokenMgo> optionalAccessToken = accessTokenMgoRepository.findByUserId(userDoc.getId());
+            if(!optionalAccessToken.isPresent()){
+                accessTokenMgo.setToken(token);
+                accessTokenMgo.setClientIp(Utils.getRequestIP(request));
+                accessTokenMgo.setUserId(userDoc.getId());
+                accessTokenMgo.setExpireDate(currentDate.plusDays(1));
+                accessTokenMgo.setStatus(Commons.STATUS_ACTIVE);
+                accessTokenMgo.setCreatedAt(LocalDateTime.now());
+                accessTokenMgo.setId(generatorSeqService.getNextSequenceId(accessTokenMgo.SEQUENCE_NAME));
+                accessTokenMgoRepository.save(accessTokenMgo);
+            }else{
+                accessTokenMgo = optionalAccessToken.get();
+                accessTokenMgo.setToken(token);
+                accessTokenMgo.setClientIp(Utils.getRequestIP(request));
+                accessTokenMgo.setExpireDate(currentDate.plusDays(1));
+                accessTokenMgo.setStatus(Commons.STATUS_ACTIVE);
+                accessTokenMgo.setCreatedAt(LocalDateTime.now());
+                accessTokenMgoRepository.save(accessTokenMgo);
+            }
 
             JwtResponse jwtResponse = new JwtResponse(jwt, userDoc.getId(), userDoc.getEmail(), userDoc.getEmail(),userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()), roles);
             log.info("Save login success");

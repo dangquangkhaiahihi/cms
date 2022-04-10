@@ -20,6 +20,6 @@ public class RoleDoc {
     private String description;
     private Integer status;
 
-    @DBRef
+    @DBRef(lazy = true)
     private List<PermissionDoc> permissions = new ArrayList<>();
 }

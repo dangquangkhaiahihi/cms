@@ -2,28 +2,29 @@ package com.management.cms.controller;
 
 import com.management.cms.constant.Commons;
 import com.management.cms.model.dto.UserDto;
-import com.management.cms.model.enitity.AreaDoc;
-import com.management.cms.model.enitity.UserDoc;
-import com.management.cms.model.request.AreaSaveRequest;
-import com.management.cms.model.request.AreaSearchRequest;
-import com.management.cms.model.request.UserSaveRequest;
-import com.management.cms.model.request.UserSearchRequest;
+import com.management.cms.model.request.*;
 import com.management.cms.model.response.BaseResponse;
 import com.management.cms.service.UserService;
+import com.management.cms.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
     @Autowired
     UserService userService;
+
+    Utils utils = new Utils();
 
     @PostMapping()
     public ResponseEntity<?> save(@Validated @RequestBody UserSaveRequest userSaveRequest) {
@@ -75,7 +76,7 @@ public class UserController {
         userSearchRequest.setRole(role);
 
         Sort sort = null;
-        sort = Sort.by("code").descending();
+        sort = Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
         try {
@@ -110,6 +111,50 @@ public class UserController {
             String message = userService.lockAndUnlockById(id);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
             baseResponse.setData(message);
+            return ResponseEntity.ok(baseResponse);
+        } catch (Exception e) {
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
+            baseResponse.setDesc(e.getMessage());
+            return ResponseEntity.badRequest().body(baseResponse);
+        }
+    }
+
+    @PutMapping("/reset_password/{id}")
+    public ResponseEntity<?> resetPass(@PathVariable Long id) {
+        try {
+            userService.resetPassword(id);
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
+            baseResponse.setData("Resset pass successfully");
+            return ResponseEntity.ok(baseResponse);
+        } catch (Exception e) {
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
+            baseResponse.setDesc(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+    }
+
+    @PostMapping("/change_password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePassRequest changePassRequest) {
+        String result;
+        try {
+            result = userService.changePassword(changePassRequest);
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
+            baseResponse.setData(result);
+            return ResponseEntity.ok(baseResponse);
+        } catch (Exception e) {
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
+            baseResponse.setDesc(e.getMessage());
+            return ResponseEntity.badRequest().body(baseResponse);
+        }
+    }
+
+    @GetMapping(value = "/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) throws Exception {
+        try {
+            String token = utils.parseJwt(request);
+            System.out.println("cacacacac " + token);
+            userService.logout(token);
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
             return ResponseEntity.ok(baseResponse);
         } catch (Exception e) {
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);

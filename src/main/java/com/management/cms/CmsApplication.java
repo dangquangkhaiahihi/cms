@@ -1,5 +1,6 @@
 package com.management.cms;
 
+import com.management.cms.constant.Commons;
 import com.management.cms.model.enitity.AreaDoc;
 import com.management.cms.model.enitity.UserDoc;
 import com.management.cms.repository.AreaRepository;
@@ -92,6 +93,12 @@ public class CmsApplication {
 //		user.setPassword(passwordEncoder.encode(Commons.DEFAULT_PASSWORD));
 //		user.setRole(role);
 //		user.setId(generatorSeqService.getNextSequenceId(user.SEQUENCE_NAME));
+//		userRepository.save(user);
+
+//		UserDoc user = userRepository.findByEmail("khai@gmail.com").get();
+//		System.out.println(user.getFailCount());
+//		user.setPassword(passwordEncoder.encode(Commons.DEFAULT_PASSWORD));
+//		user.setFailCount(0);
 //		userRepository.save(user);
 	}
 
