@@ -41,7 +41,7 @@ public class AreaServiceImpl implements AreaService {
             throw new Exception("Mã khu vực đã tồn tại");
         }
 
-        //tạo đối tượng ServiceEntity
+        //tạo đối tượng
         AreaDoc areaDoc = new AreaDoc();
         BeanUtils.copyProperties(areaSaveRequest,areaDoc);
 
