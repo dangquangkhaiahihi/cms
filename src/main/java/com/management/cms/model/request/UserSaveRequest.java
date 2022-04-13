@@ -25,7 +25,7 @@ public class UserSaveRequest {
 
     private List<String> areaCodes = new ArrayList<>();
 
-    public void validateInput(){
+    public void validateInput() throws Exception{
 
     }
 }

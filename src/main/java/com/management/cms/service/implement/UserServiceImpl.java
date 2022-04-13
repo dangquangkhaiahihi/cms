@@ -15,13 +15,15 @@ import com.management.cms.service.GeneratorSeqService;
 import com.management.cms.service.UserService;
 import com.management.cms.utils.Utils;
 import com.management.cms.utils.WebUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -63,7 +65,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public void createNewUser(UserSaveRequest userSaveRequest) throws Exception{
         //validate input
-        userSaveRequest.validateInput();
+        try{
+            userSaveRequest.validateInput();
+        }catch (Exception e){
+            throw e;
+        }
         //check area code có hợp lệ ko
         if(userSaveRequest.getAreaCodes().isEmpty()){
             throw new Exception("Không được để trống mã khu vực");
@@ -125,7 +131,11 @@ public class UserServiceImpl implements UserService {
         }
 
         //validate input
-        userSaveRequest.validateInput();
+        try{
+            userSaveRequest.validateInput();
+        }catch (Exception e){
+            throw e;
+        }
         //check area code có hợp lệ ko
         if(userSaveRequest.getAreaCodes().isEmpty()){
             throw new Exception("Không được để trống mã khu vực");
@@ -333,7 +343,7 @@ public class UserServiceImpl implements UserService {
                 }
             }
             currentUser.setPassword(passwordEncoder.encode(changePassRequest.getPasswordNew()));
-            currentUser.setEnabled(Commons.STATUS_ACTIVE);
+//            currentUser.setEnabled(Commons.STATUS_ACTIVE);
             currentUser.setResetPass(Commons.DID_RESET_PASS);
             currentUser.setUpdatedBy(currentUser.getEmail());
             currentUser.setUpdatedAt(LocalDateTime.now());

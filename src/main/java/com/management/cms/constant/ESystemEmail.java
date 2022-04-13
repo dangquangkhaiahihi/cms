@@ -1,5 +1,8 @@
 package com.management.cms.constant;
 
+import lombok.Getter;
+
+@Getter
 public enum ESystemEmail {
     MAIL_RESET_PASS("Cấp lại PASSWORD", "reset_pass.html"),
     MAIL_CREATE_ACCOUNT("Cấp tài khoản mới ", "create_user.html");

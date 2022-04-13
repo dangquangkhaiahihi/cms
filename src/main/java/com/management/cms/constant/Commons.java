@@ -9,7 +9,11 @@ public class Commons {
     public static final String SENDER = "khdn";
     public static final Integer STATUS_ACTIVE = 1;
     public static final Integer STATUS_INACTIVE = 0;
+    public static final Integer STATUS_EXPIRED = 0;
     public static final Integer STATUS_WAITING_FOR_ACTIVATED = 2;
+
+    public static final Integer WARNING_STATUS_OK = 1;
+    public static final Integer WARNING_STATUS_PROBLEM = 0;
 
     public static final Integer ENABLED = 1;
     public static final Integer DISABLED = 0;

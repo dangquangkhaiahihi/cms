@@ -5,5 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface BusinessTypeRepository extends MongoRepository<BusinessTypeDoc,Long> {
     Boolean existsByCode(String code);
-    MongoRepository findByCode(String code);
+    BusinessTypeDoc findByCode(String code);
 }
