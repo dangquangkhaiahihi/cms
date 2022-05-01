@@ -11,6 +11,8 @@ import com.management.cms.service.GeneratorSeqService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.MutableSortDefinition;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +42,11 @@ public class AreaServiceImpl implements AreaService {
         if (Boolean.TRUE.equals(areaRepository.existsByCode(areaSaveRequest.getCode()))){
             throw new Exception("Mã khu vực đã tồn tại");
         }
+        try{
+            areaSaveRequest.vailidateInput();
+        }catch(Exception e){
+            throw e;
+        }
 
         //tạo đối tượng
         AreaDoc areaDoc = new AreaDoc();
@@ -59,7 +66,11 @@ public class AreaServiceImpl implements AreaService {
     public AreaDoc editArea(AreaSaveRequest areaSaveRequest, Long id) throws Exception{
         //không được thay đổi id
         if(id != areaSaveRequest.getId()) throw new Exception("Không được thay đổi id");
-
+        try{
+            areaSaveRequest.vailidateInput();
+        }catch(Exception e){
+            throw e;
+        }
         //check id truyền vào có trong DB ko
         Optional<AreaDoc> optional = areaRepository.findById(id);
         if (!optional.isPresent()){
@@ -80,7 +91,7 @@ public class AreaServiceImpl implements AreaService {
     }
 
     @Override
-    public Page<AreaDoc> searchAllArea(AreaSearchRequest areaSearchRequest, Pageable pageable) {
+    public PagedListHolder<AreaDoc> searchAllArea(AreaSearchRequest areaSearchRequest, Integer page, Integer size, String sortby) {
         Query query = new Query();
 
         if (!StringUtils.isEmpty(areaSearchRequest.getCode().toLowerCase().trim())) {
@@ -93,8 +104,18 @@ public class AreaServiceImpl implements AreaService {
 
         List<AreaDoc> queryResults = mongoTemplate.find(query, AreaDoc.class);
 
-        Long total = Long.valueOf(queryResults.size());
-        return new PageImpl<>(queryResults, pageable, total);
+        PagedListHolder pagable = new PagedListHolder(queryResults);
+
+        MutableSortDefinition mutableSortDefinition = new MutableSortDefinition();
+        mutableSortDefinition.setAscending(true);
+        mutableSortDefinition.setIgnoreCase(true);
+        mutableSortDefinition.setProperty(sortby);
+        pagable.setSort(mutableSortDefinition);
+        pagable.resort();
+
+        pagable.setPageSize(size);
+        pagable.setPage(page);
+        return pagable;
     }
 
     @Override

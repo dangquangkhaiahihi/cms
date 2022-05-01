@@ -95,11 +95,10 @@ public class CmsApplication {
 //		user.setId(generatorSeqService.getNextSequenceId(user.SEQUENCE_NAME));
 //		userRepository.save(user);
 
-//		UserDoc user = userRepository.findByEmail("khai@gmail.com").get();
-//		System.out.println(user.getFailCount());
-//		user.setPassword(passwordEncoder.encode(Commons.DEFAULT_PASSWORD));
-//		user.setFailCount(0);
-//		userRepository.save(user);
+			UserDoc user = userRepository.findByEmail("dang.quang.khai2610@gmail.com").get();
+		user.setPassword(passwordEncoder.encode(Commons.DEFAULT_PASSWORD));
+		user.setFailCount(0);
+		userRepository.save(user);
 	}
 
 }

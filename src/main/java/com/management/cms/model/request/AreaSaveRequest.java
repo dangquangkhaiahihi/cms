@@ -7,8 +7,15 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class AreaSaveRequest {
     Long id;
-    @NotBlank(message = "Tên khu vực không được trống")
     String name;
-    @NotBlank(message = "Mã khu vực không được trống")
     String code;
+
+    public void vailidateInput() throws Exception{
+        if(this.name.isEmpty()){
+            throw new Exception("Tên khu vực không được trống");
+        }
+        if(this.code.isEmpty()){
+            throw new Exception("Mã khu vực không được trống");
+        }
+    }
 }

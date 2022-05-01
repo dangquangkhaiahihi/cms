@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.MutableSortDefinition;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -174,31 +176,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Pageable pageable) throws Exception{
+    public PagedListHolder<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Integer page, Integer size, String sortby){
         Query query = new Query();
 
-        if (!StringUtils.isEmpty(userSearchRequest.getEmail().toLowerCase().trim())) {
-            query.addCriteria(Criteria.where("email").regex(".*"+userSearchRequest.getEmail().toLowerCase().trim()+".*", "i"));
-        }
-
-        if (!StringUtils.isEmpty(userSearchRequest.getPhoneNumber().toLowerCase().trim())) {
-            query.addCriteria(Criteria.where("phoneNumber").regex(".*"+userSearchRequest.getPhoneNumber().toLowerCase().trim()+".*", "i"));
-        }
-
-        if (!StringUtils.isEmpty(userSearchRequest.getSocialSecurityNum().toLowerCase().trim())) {
-            query.addCriteria(Criteria.where("socialSecurityNum").regex(".*"+userSearchRequest.getSocialSecurityNum().toLowerCase().trim()+".*", "i"));
+        if (!StringUtils.isEmpty(userSearchRequest.getKeyword().toLowerCase().trim())) {
+            Criteria orCriterias = new Criteria();
+            List<Criteria> orExpressions  = new ArrayList<>();
+            orExpressions.add(Criteria.where("email").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            orExpressions.add(Criteria.where("phoneNumber").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            orExpressions.add(Criteria.where("socialSecurityNum").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            query.addCriteria(orCriterias.orOperator(orExpressions.toArray(new Criteria[orExpressions.size()])));
         }
 
         if (!StringUtils.isEmpty(userSearchRequest.getRole().toLowerCase().trim())) {
             Optional<RoleDoc> optionalRole = roleRepository.findByCode(userSearchRequest.getRole());
-            if(!optionalRole.isPresent()) throw new Exception("Mã role không hợp lệ");
+//            if(!optionalRole.isPresent()) throw new Exception("Mã role không hợp lệ");
             RoleDoc roleDoc = optionalRole.get();
             query.addCriteria(Criteria.where("role").is(roleDoc));
         }
 
         if (!StringUtils.isEmpty(userSearchRequest.getArea().toLowerCase().trim())) {
             AreaDoc areaDoc = areaRepository.findByCode(userSearchRequest.getArea());
-            if(areaDoc == null) throw new Exception("Mã khu vực không hợp lệ");
+//            if(areaDoc == null) throw new Exception("Mã khu vực không hợp lệ");
             query.addCriteria(Criteria.where("areas").is(areaDoc));
         }
 
@@ -210,7 +209,6 @@ public class UserServiceImpl implements UserService {
 
         List<UserDto> returnResults = new ArrayList<>();
 
-        Long total = Long.valueOf(queryResults.size());
         for(UserDoc userDoc : queryResults){
             UserDto userDto = new UserDto();
             BeanUtils.copyProperties(userDoc, userDto);
@@ -223,7 +221,20 @@ public class UserServiceImpl implements UserService {
             userDto.setStatus(userDoc.getEnabled());
             returnResults.add(userDto);
         }
-        return new PageImpl<>(returnResults, pageable, total);
+
+        PagedListHolder pagable = new PagedListHolder(returnResults);
+
+        MutableSortDefinition mutableSortDefinition = new MutableSortDefinition();
+        mutableSortDefinition.setAscending(false);
+        mutableSortDefinition.setIgnoreCase(true);
+        mutableSortDefinition.setProperty(sortby);
+
+        pagable.setSort(mutableSortDefinition);
+        pagable.resort();
+
+        pagable.setPageSize(size);
+        pagable.setPage(page);
+        return pagable;
     }
 
     @Override

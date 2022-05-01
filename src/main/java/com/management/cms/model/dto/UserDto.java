@@ -2,6 +2,7 @@ package com.management.cms.model.dto;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,4 +17,5 @@ public class UserDto {
     private Integer status;
     private List<String> areas = new ArrayList<>();
     private String role;
+    private LocalDateTime createdAt;
 }

@@ -1,18 +1,15 @@
 package com.management.cms.controller;
 
 import com.management.cms.constant.Commons;
+import com.management.cms.model.dto.SearchDtos;
 import com.management.cms.model.enitity.AreaDoc;
 import com.management.cms.model.request.AreaSaveRequest;
 import com.management.cms.model.request.AreaSearchRequest;
 import com.management.cms.model.response.BaseResponse;
 import com.management.cms.service.AreaService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,13 +30,17 @@ public class AreaController {
         areaSearchRequest.setCode(code);
         areaSearchRequest.setStatus(status);
 
-        Sort sort = null;
-        sort = Sort.by("code").descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        String sortby = "code";
+        PagedListHolder<AreaDoc> areas = areaService.searchAllArea(areaSearchRequest, page, size, sortby);
 
-        Page<AreaDoc> areas = areaService.searchAllArea(areaSearchRequest, pageable);
+        SearchDtos searchDtos = new SearchDtos();
+        searchDtos.setContent(areas.getPageList());
+        searchDtos.setTotalElements(areas.getNrOfElements());
+        searchDtos.setTotalPages(areas.getPageCount());
+
         BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
-        baseResponse.setData(areas);
+        baseResponse.setData(searchDtos);
+//        baseResponse.setData(areas);
         return ResponseEntity.ok(baseResponse);
     }
 

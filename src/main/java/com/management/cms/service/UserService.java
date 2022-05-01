@@ -5,6 +5,7 @@ import com.management.cms.model.dto.UserDto;
 import com.management.cms.model.request.ChangePassRequest;
 import com.management.cms.model.request.UserSaveRequest;
 import com.management.cms.model.request.UserSearchRequest;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -16,7 +17,7 @@ public interface UserService {
 
     void editUser(UserSaveRequest userSaveRequest,Long id) throws Exception;
 
-    Page<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Pageable pageable) throws Exception;
+    PagedListHolder<UserDto> searchAllUser(UserSearchRequest userSearchRequest, Integer page, Integer size, String sortby);
 
     UserDto getUserDetailById(Long id) throws Exception;
 

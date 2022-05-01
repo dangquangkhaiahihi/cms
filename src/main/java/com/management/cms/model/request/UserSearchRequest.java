@@ -4,9 +4,7 @@ import lombok.Data;
 
 @Data
 public class UserSearchRequest {
-    String email;
-    String phoneNumber;
-    String socialSecurityNum;
+    String keyword;
     String area;
     Integer enabled;
     String role;

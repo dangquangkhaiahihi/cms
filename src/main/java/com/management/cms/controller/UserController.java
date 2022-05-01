@@ -1,12 +1,14 @@
 package com.management.cms.controller;
 
 import com.management.cms.constant.Commons;
+import com.management.cms.model.dto.SearchDtos;
 import com.management.cms.model.dto.UserDto;
 import com.management.cms.model.request.*;
 import com.management.cms.model.response.BaseResponse;
 import com.management.cms.service.UserService;
 import com.management.cms.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +47,7 @@ public class UserController {
                                     @PathVariable Long id) {
 
         try {
-            userService.editUser(userSaveRequest,id);
+            userService.editUser(userSaveRequest, id);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
             baseResponse.setData("Chỉnh sửa người dùng thành công");
             return ResponseEntity.ok(baseResponse);
@@ -57,9 +59,7 @@ public class UserController {
     }
 
     @GetMapping()
-    public ResponseEntity<?> search(@RequestParam(value = "email", required = false, defaultValue = "") String email,
-                                    @RequestParam(value = "phone", required = false, defaultValue = "") String phone,
-                                    @RequestParam(value = "ssn", required = false, defaultValue = "") String ssn,
+    public ResponseEntity<?> search(@RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
                                     @RequestParam(value = "status", required = false, defaultValue = "2") Integer status,
                                     // status = 0 -> false, status = 1 -> true, status = 2 -> all
                                     @RequestParam(value = "area", required = false, defaultValue = "") String area,
@@ -68,27 +68,23 @@ public class UserController {
                                     @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
         UserSearchRequest userSearchRequest = new UserSearchRequest();
-        userSearchRequest.setEmail(email);
-        userSearchRequest.setPhoneNumber(phone);
-        userSearchRequest.setSocialSecurityNum(ssn);
+        userSearchRequest.setKeyword(keyword);
         userSearchRequest.setArea(area);
         userSearchRequest.setEnabled(status);
         userSearchRequest.setRole(role);
 
-        Sort sort = null;
-        sort = Sort.by("createdAt").descending();
-        Pageable pageable = PageRequest.of(page, size, sort);
+        String sortby = "createdAt";
 
-        try {
-            Page<UserDto> users = userService.searchAllUser(userSearchRequest, pageable);
-            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
-            baseResponse.setData(users);
-            return ResponseEntity.ok(baseResponse);
-        } catch (Exception e) {
-            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
-            baseResponse.setDesc(e.getMessage());
-            return ResponseEntity.badRequest().body(baseResponse);
-        }
+        PagedListHolder<UserDto> users = userService.searchAllUser(userSearchRequest, page, size, sortby);
+
+        SearchDtos searchDtos = new SearchDtos();
+        searchDtos.setContent(users.getPageList());
+        searchDtos.setTotalElements(users.getNrOfElements());
+        searchDtos.setTotalPages(users.getPageCount());
+
+        BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
+        baseResponse.setData(searchDtos);
+        return ResponseEntity.ok(baseResponse);
     }
 
     @GetMapping("/{id}")
