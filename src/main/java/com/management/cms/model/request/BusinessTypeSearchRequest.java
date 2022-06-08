@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class BusinessTypeSearchRequest {
-    private String code;
+    private String keyword;
     private Integer status;
 }

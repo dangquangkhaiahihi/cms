@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -84,8 +85,12 @@ public class BusinessTypeServiceImpl implements BusinessTypeService {
     public Page<BusinessTypeDoc> searchAllType(BusinessTypeSearchRequest businessTypeSearchRequest, Pageable pageable) {
         Query query = new Query();
 
-        if (!StringUtils.isEmpty(businessTypeSearchRequest.getCode().toLowerCase().trim())) {
-            query.addCriteria(Criteria.where("code").regex(".*"+businessTypeSearchRequest.getCode().toLowerCase().trim()+".*", "i"));
+        if (!StringUtils.isEmpty(businessTypeSearchRequest.getKeyword().toLowerCase().trim())) {
+            Criteria orCriterias = new Criteria();
+            List<Criteria> orExpressions  = new ArrayList<>();
+            orExpressions.add(Criteria.where("code").regex(".*" + businessTypeSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            orExpressions.add(Criteria.where("name").regex(".*" + businessTypeSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            query.addCriteria(orCriterias.orOperator(orExpressions.toArray(new Criteria[orExpressions.size()])));
         }
 
         if (businessTypeSearchRequest.getStatus() != 2) {

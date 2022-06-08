@@ -22,14 +22,14 @@ public class BusinessTypeController {
     BusinessTypeService businessTypeService;
 
     @GetMapping()
-    public ResponseEntity<?> search(@RequestParam(value = "code", required = false, defaultValue = "") String code,
+    public ResponseEntity<?> search(@RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
                                     @RequestParam(value = "status", required = false, defaultValue = "2") Integer status,
                                     // status = 0 -> false, status = 1 -> true, status = 2 -> all
                                     @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
                                     @RequestParam(name = "size", required = false, defaultValue = "10") Integer size
     ) {
         BusinessTypeSearchRequest businessTypeSearchRequest = new BusinessTypeSearchRequest();
-        businessTypeSearchRequest.setCode(code);
+        businessTypeSearchRequest.setKeyword(keyword);
         businessTypeSearchRequest.setStatus(status);
 
         Sort sort = null;
