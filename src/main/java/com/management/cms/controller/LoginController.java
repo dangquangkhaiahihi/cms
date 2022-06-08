@@ -36,9 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -75,7 +73,7 @@ public class LoginController extends BaseController {
 
             UserDoc user = optionalUser.get();
             if(user.getFailCount() > 4 || user.getEnabled().equals(Commons.STATUS_INACTIVE)){
-                throw new AccountLockException("Tài khoản của bạn đã bị khóa. Hãy liên hệ với admin để mở khóa.");
+                throw new AccountLockException("");
             }
 
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
@@ -88,6 +86,11 @@ public class LoginController extends BaseController {
             if (userDetails.getAuthorities() != null) {
                 roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
             }
+
+            List<String> areas = new ArrayList<>();
+            userDoc.getAreas().forEach(area -> {
+                areas.add(area.getCode());
+            });
 
             ResponseAuthJwt responseAuthJwt = new ResponseAuthJwt();
             responseAuthJwt.setUserId(userDoc.getId());
@@ -120,7 +123,7 @@ public class LoginController extends BaseController {
                 accessTokenMgoRepository.save(accessTokenMgo);
             }
 
-            JwtResponse jwtResponse = new JwtResponse(jwt, userDoc.getId(), userDoc.getEmail(), userDoc.getEmail(),userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()), roles);
+            JwtResponse jwtResponse = new JwtResponse(jwt, userDoc.getId(), userDoc.getEmail(), userDoc.getEmail(),userDoc.getFirstName().concat(" ").concat(userDoc.getLastName()), roles, areas);
             log.info("Save login success");
             userService.updateLastLoginAndFailCount(loginRequest.getUsername(), true);
 
@@ -140,7 +143,7 @@ public class LoginController extends BaseController {
             log.info("Account lock");
             log.info("Error authen", accountLockException);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
-            baseResponse.setDesc("Tài khoản của bạn đã bị khóa do nhập sai quá nhiều lần. Hãy liên hệ với admin để mở khóa.");
+            baseResponse.setDesc("Tài khoản của bạn đã bị khóa. Hãy liên hệ với admin để mở khóa.");
             return ResponseEntity.badRequest().body(baseResponse);
         }
         catch (Exception e) {

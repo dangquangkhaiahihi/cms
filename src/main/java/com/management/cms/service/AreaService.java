@@ -7,10 +7,13 @@ import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface AreaService {
     AreaDoc createNewArea(AreaSaveRequest areaSaveRequest) throws Exception;
     AreaDoc editArea(AreaSaveRequest areaSaveRequest,Long id) throws Exception;
     PagedListHolder<AreaDoc> searchAllArea(AreaSearchRequest areaSearchRequest, Integer page, Integer size, String sortby);
     AreaDoc getAreaDetailById(Long id) throws Exception;
     AreaDoc lockAndUnlockById(Long id) throws Exception;
+    List<AreaDoc> getAllActiveAreas();
 }

@@ -5,6 +5,7 @@ import com.mifmif.common.regex.Generex;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
@@ -38,6 +39,8 @@ public class WebUtils {
     }
 
     public static UserDetailsImpl getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentPrincipalName = authentication.getName();
         UserDetailsImpl userPrincipal = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return userPrincipal;
     }

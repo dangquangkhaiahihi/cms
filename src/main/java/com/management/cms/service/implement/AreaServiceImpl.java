@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,8 +95,12 @@ public class AreaServiceImpl implements AreaService {
     public PagedListHolder<AreaDoc> searchAllArea(AreaSearchRequest areaSearchRequest, Integer page, Integer size, String sortby) {
         Query query = new Query();
 
-        if (!StringUtils.isEmpty(areaSearchRequest.getCode().toLowerCase().trim())) {
-            query.addCriteria(Criteria.where("code").regex(".*"+areaSearchRequest.getCode().toLowerCase().trim()+".*", "i"));
+        if (!StringUtils.isEmpty(areaSearchRequest.getKeyword().toLowerCase().trim())) {
+            Criteria orCriterias = new Criteria();
+            List<Criteria> orExpressions  = new ArrayList<>();
+            orExpressions.add(Criteria.where("code").regex(".*" + areaSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            orExpressions.add(Criteria.where("name").regex(".*" + areaSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            query.addCriteria(orCriterias.orOperator(orExpressions.toArray(new Criteria[orExpressions.size()])));
         }
 
         if (areaSearchRequest.getStatus() != 2) {
@@ -142,5 +147,24 @@ public class AreaServiceImpl implements AreaService {
         }
         areaRepository.save(areaDoc);
         return areaDoc;
+    }
+
+    @Override
+    public List<AreaDoc> getAllActiveAreas() {
+        Query query = new Query();
+
+        query.addCriteria(Criteria.where("status").is(1));
+
+        List<AreaDoc> queryResults = mongoTemplate.find(query, AreaDoc.class);
+
+        PagedListHolder pagable = new PagedListHolder(queryResults);
+
+        MutableSortDefinition mutableSortDefinition = new MutableSortDefinition();
+        mutableSortDefinition.setAscending(true);
+        mutableSortDefinition.setIgnoreCase(true);
+        mutableSortDefinition.setProperty("code");
+        pagable.setSort(mutableSortDefinition);
+        pagable.resort();
+        return pagable.getPageList();
     }
 }

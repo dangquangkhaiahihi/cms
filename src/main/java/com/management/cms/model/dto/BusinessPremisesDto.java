@@ -28,6 +28,7 @@ public class BusinessPremisesDto {
     private String businessLicenseRegno;//detail
 
     private String lastInspectDate;//detail
+    private String inspectDate;//detail
     private Integer warningStatus;//crud
     private String warningContent;//detail
 }

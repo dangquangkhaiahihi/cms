@@ -1,10 +1,8 @@
 package com.management.cms;
 
 import com.management.cms.constant.Commons;
-import com.management.cms.model.enitity.AreaDoc;
 import com.management.cms.model.enitity.UserDoc;
 import com.management.cms.repository.AreaRepository;
-import com.management.cms.repository.PermissionRepository;
 import com.management.cms.repository.RoleRepository;
 import com.management.cms.repository.UserRepository;
 import com.management.cms.service.GeneratorSeqService;
@@ -15,7 +13,6 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import javax.annotation.PostConstruct;
-import java.util.List;
 
 @SpringBootApplication
 @EnableMongoRepositories
@@ -35,8 +32,6 @@ public class CmsApplication {
 	@Autowired
 	private RoleRepository roleRepository;
 
-	@Autowired
-	private PermissionRepository permissionRepository;
 
 	public static void main(String[] args) {
 		SpringApplication.run(CmsApplication.class, args);

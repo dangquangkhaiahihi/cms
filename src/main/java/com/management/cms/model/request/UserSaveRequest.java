@@ -3,9 +3,6 @@ package com.management.cms.model.request;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Data
 public class UserSaveRequest {
@@ -23,7 +20,9 @@ public class UserSaveRequest {
     @NotBlank(message = "Số căn cước công dân không được trống")
     private String socialSecurityNum;
 
-    private List<String> areaCodes = new ArrayList<>();
+    private String role;
+
+    private String areaCode;
 
     public void validateInput() throws Exception{
 

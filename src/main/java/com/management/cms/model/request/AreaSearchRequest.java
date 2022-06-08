@@ -4,7 +4,6 @@ import lombok.Data;
 
 @Data
 public class AreaSearchRequest {
-    String name;
-    String code;
+    String keyword;
     Integer status;
 }

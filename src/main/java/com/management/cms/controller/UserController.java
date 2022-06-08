@@ -3,8 +3,10 @@ package com.management.cms.controller;
 import com.management.cms.constant.Commons;
 import com.management.cms.model.dto.SearchDtos;
 import com.management.cms.model.dto.UserDto;
+import com.management.cms.model.enitity.AreaDoc;
 import com.management.cms.model.request.*;
 import com.management.cms.model.response.BaseResponse;
+import com.management.cms.service.AreaService;
 import com.management.cms.service.UserService;
 import com.management.cms.utils.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +21,17 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
     @Autowired
     UserService userService;
+
+    @Autowired
+    AreaService areaService;
 
     Utils utils = new Utils();
 
@@ -148,7 +155,6 @@ public class UserController {
     public ResponseEntity<?> logout(HttpServletRequest request) throws Exception {
         try {
             String token = utils.parseJwt(request);
-            System.out.println("cacacacac " + token);
             userService.logout(token);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
             return ResponseEntity.ok(baseResponse);
@@ -157,5 +163,13 @@ public class UserController {
             baseResponse.setDesc(e.getMessage());
             return ResponseEntity.badRequest().body(baseResponse);
         }
+    }
+
+    @GetMapping(value = "/getAllActiveAreas")
+    public ResponseEntity<?> getAllActiveAreas(){
+        List<AreaDoc> areaDocs = areaService.getAllActiveAreas();
+        BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
+        baseResponse.setData(areaDocs);
+        return ResponseEntity.ok(baseResponse);
     }
 }

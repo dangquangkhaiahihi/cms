@@ -10,6 +10,8 @@ import java.util.List;
 public class UserDto {
     private Long id;
     private String email;
+    private String firstName;
+    private String lastName;
     private String fullName;
     private String phoneNumber;
     private String dob;
@@ -18,4 +20,5 @@ public class UserDto {
     private List<String> areas = new ArrayList<>();
     private String role;
     private LocalDateTime createdAt;
+    private String areaCode;
 }

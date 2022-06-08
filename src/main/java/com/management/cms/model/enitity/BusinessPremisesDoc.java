@@ -37,6 +37,8 @@ public class BusinessPremisesDoc {
     @DBRef(lazy = true)
     private List<LicenseDoc> licenses = new ArrayList<>(); // not in CRUD table
     private String foodSafetyCertificateProvidedBy;
+
+    //Có vẻ 2 cái này ko cần thiết lắm, nma kệ đi ko động tới là ok
     private LocalDateTime foodSafetyCertificateStartDate;
     private LocalDateTime foodSafetyCertificateEndDate;
     @Transient
@@ -46,6 +48,7 @@ public class BusinessPremisesDoc {
     private String businessLicenseRegno;
 
     private LocalDateTime lastInspectDate;
+    private LocalDateTime inspectDate;
     private Integer warningStatus;
     private String warningContent;
 
@@ -87,20 +90,20 @@ public class BusinessPremisesDoc {
             return;
         }
 
-        if (this.foodSafetyCertificateEndDate == null) return;
-
         this.licenses.stream().forEach(item -> {
             if (item.getLicenseType().equals(ELicenseType.BUSINESS_LICENSE)) {
                 if (item.getExpirationDate().isAfter(LocalDateTime.now()))
                     this.licenseStatus = Commons.STATUS_ACTIVE;
                 else this.licenseStatus = Commons.STATUS_EXPIRED;
             }
-        });
 
-        if (this.foodSafetyCertificateEndDate.isAfter(LocalDateTime.now())) {
-            this.certificateStatus = Commons.STATUS_ACTIVE;
-        } else {
-            this.certificateStatus = Commons.STATUS_EXPIRED;
-        }
+            if(item.getLicenseType().equals(ELicenseType.FOOD_SAFETY_CERTIFICATE)) {
+                if(item.getExpirationDate().isAfter(LocalDateTime.now())){
+                    this.certificateStatus = Commons.STATUS_ACTIVE;
+                }else {
+                    this.certificateStatus = Commons.STATUS_EXPIRED;
+                }
+            }
+        });
     }
 }

@@ -4,27 +4,30 @@ import com.management.cms.constant.Commons;
 import com.management.cms.model.dto.BusinessPremisesDto;
 import com.management.cms.model.dto.BusinessPremisesSearchDto;
 import com.management.cms.model.dto.SearchDtos;
+import com.management.cms.model.enitity.BusinessTypeDoc;
 import com.management.cms.model.request.BusinessPremisesSaveRequest;
 import com.management.cms.model.request.InspectRequest;
 import com.management.cms.model.request.ListLicenseRequest;
 import com.management.cms.model.request.ListPersonRequest;
 import com.management.cms.model.response.BaseResponse;
 import com.management.cms.service.BusinessPremisesService;
+import com.management.cms.service.BusinessTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.support.PagedListHolder;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/business_premises")
 public class BusinessPremisesController {
     @Autowired
     BusinessPremisesService businessPremisesService;
+
+    @Autowired
+    BusinessTypeService businessTypeService;
 
     @GetMapping()
     public ResponseEntity<?> search(@RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
@@ -64,8 +67,28 @@ public class BusinessPremisesController {
         }
     }
 
+    @PostMapping("/{id}")
+    public ResponseEntity<?> edit(@Validated @RequestBody BusinessPremisesSaveRequest businessPremisesSaveRequest,
+                                  @PathVariable Long id) {
+        if(!id.equals(businessPremisesSaveRequest.getId())){
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
+            baseResponse.setDesc("Id không hợp lệ");
+            return ResponseEntity.badRequest().body(baseResponse);
+        }
+        try {
+            String result = businessPremisesService.editBusinessPremises(businessPremisesSaveRequest);
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
+            baseResponse.setData(result);
+            return ResponseEntity.ok(baseResponse);
+        } catch (Exception e) {
+            BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
+            baseResponse.setDesc(e.getMessage());
+            return ResponseEntity.badRequest().body(baseResponse);
+        }
+    }
+
     @PostMapping("/add_licenses/{premisesId}")
-    public ResponseEntity<?> saveLicenseToPremises(@Validated @RequestBody ListLicenseRequest listLicenseRequest,
+    public ResponseEntity<?> saveLicenseToPremises(@RequestBody ListLicenseRequest listLicenseRequest,
                                                   @PathVariable Long premisesId) {
         try {
             String result = businessPremisesService.addLicensesToPremises(listLicenseRequest,premisesId);
@@ -80,7 +103,7 @@ public class BusinessPremisesController {
     }
 
     @PostMapping("/add_people/{premisesId}")
-    public ResponseEntity<?> saveLicenseToPremises(@Validated @RequestBody ListPersonRequest listPersonRequest,
+    public ResponseEntity<?> savePeopleToPremises(@RequestBody ListPersonRequest listPersonRequest,
                                                    @PathVariable Long premisesId) {
         try {
             String result = businessPremisesService.addPersonToPremises(listPersonRequest,premisesId);
@@ -121,5 +144,13 @@ public class BusinessPremisesController {
             baseResponse.setDesc(e.getMessage());
             return ResponseEntity.badRequest().body(baseResponse);
         }
+    }
+
+    @GetMapping(value = "/getAllActiveBusinessType")
+    public ResponseEntity<?> getAllActiveBusinessType(){
+        List<BusinessTypeDoc> businessTypeDocs = businessTypeService.getAllActiveBusinessType();
+        BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
+        baseResponse.setData(businessTypeDocs);
+        return ResponseEntity.ok(baseResponse);
     }
 }

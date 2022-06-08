@@ -11,6 +11,7 @@ import com.management.cms.model.request.ChangePassRequest;
 import com.management.cms.model.request.UserSaveRequest;
 import com.management.cms.model.request.UserSearchRequest;
 import com.management.cms.repository.*;
+import com.management.cms.service.AreaService;
 import com.management.cms.service.GeneratorSeqService;
 import com.management.cms.service.UserService;
 import com.management.cms.utils.Utils;
@@ -22,9 +23,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.support.MutableSortDefinition;
 import org.springframework.beans.support.PagedListHolder;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -46,6 +44,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     AreaRepository areaRepository;
+
+    @Autowired
+    AreaService areaService;
 
     @Autowired
     RoleRepository roleRepository;
@@ -72,23 +73,29 @@ public class UserServiceImpl implements UserService {
         }catch (Exception e){
             throw e;
         }
-        //check area code có hợp lệ ko
-        if(userSaveRequest.getAreaCodes().isEmpty()){
-            throw new Exception("Không được để trống mã khu vực");
-        }
-        if(userSaveRequest.getAreaCodes().size() > 1){
-            throw new Exception("Không thể chỉ định người dùng quản lý nhiều hơn 1 khu vực");
-        }
-        for(String areaCode : userSaveRequest.getAreaCodes()){
-            if(!areaRepository.existsByCode(areaCode)){
-                throw new Exception("Mã khu vực không hợp lệ : " + areaCode);
-            }
-        }
 
-        AreaDoc areaDoc = areaRepository.findByCode(userSaveRequest.getAreaCodes().get(0));
-
-        //tạo đối tượng
         UserDoc userDoc = new UserDoc();
+        if(userSaveRequest.getRole().equals("USER")){
+            //check area code có hợp lệ ko
+            if(userSaveRequest.getAreaCode() == null){
+                throw new Exception("Không được để trống mã khu vực");
+            }
+            if(!areaRepository.existsByCode(userSaveRequest.getAreaCode())){
+                throw new Exception("Mã khu vực không hợp lệ : " + userSaveRequest.getAreaCode());
+            }
+            AreaDoc areaDoc = areaRepository.findByCode(userSaveRequest.getAreaCode());
+            userDoc.getAreas().add(areaDoc);
+            userDoc.setRole(roleRepository.findByCode("USER").get());
+        }
+
+        if(userSaveRequest.getRole().equals("ADMIN")){
+            List<AreaDoc> areaDocs = areaService.getAllActiveAreas();
+            for(AreaDoc areaDoc : areaDocs){
+                userDoc.getAreas().add(areaDoc);
+            }
+            userDoc.setRole(roleRepository.findByCode("ADMIN").get());
+        }
+
         BeanUtils.copyProperties(userSaveRequest, userDoc);
 
         LocalDateTime dob = utils.convertStringToLocalDateTime01(userSaveRequest.getDob());
@@ -106,10 +113,7 @@ public class UserServiceImpl implements UserService {
         userDoc.setCreatedAt(LocalDateTime.now());
         userDoc.setUpdatedAt(LocalDateTime.now());
 
-        userDoc.getAreas().add(areaDoc);
-
-        userDoc.setRole(roleRepository.findByCode("USER").get());
-        //SET ID CHO PARTNER TRƯỚC KHI LƯU
+        //SET ID CHO USER TRƯỚC KHI LƯU
         userDoc.setId(generatorSeqService.getNextSequenceId(userDoc.SEQUENCE_NAME));
         userRepository.save(userDoc);
 
@@ -138,21 +142,31 @@ public class UserServiceImpl implements UserService {
         }catch (Exception e){
             throw e;
         }
+
         //check area code có hợp lệ ko
-        if(userSaveRequest.getAreaCodes().isEmpty()){
+        if(userSaveRequest.getAreaCode().isEmpty()){
             throw new Exception("Không được để trống mã khu vực");
         }
-        if(userSaveRequest.getAreaCodes().size() > 1){
-            throw new Exception("Không thể chỉ định người dùng quản lý nhiều hơn 1 khu vực");
+        if(!areaRepository.existsByCode(userSaveRequest.getAreaCode())){
+            throw new Exception("Mã khu vực không hợp lệ : " + userSaveRequest.getAreaCode());
         }
-        for(String areaCode : userSaveRequest.getAreaCodes()){
-            if(!areaRepository.existsByCode(areaCode)){
-                throw new Exception("Mã khu vực không hợp lệ : " + areaCode);
+
+        //tìm đối tượng
+        UserDoc userDoc = optional.get();
+        String userRole = userDoc.getRole().getCode();
+        if(!userRole.equals(userSaveRequest.getRole())){
+            throw new Exception("Không thể thay đổi quyền của người dùng");
+        }
+
+        if(userRole.equals("USER")){
+            //thay đổi khu vực nếu có thay đổi gì
+            if(!userDoc.getAreas().get(0).getCode().equals(userSaveRequest.getAreaCode())){
+                AreaDoc areaDoc = areaRepository.findByCode(userSaveRequest.getAreaCode());
+                userDoc.getAreas().remove(0);
+                userDoc.getAreas().add(areaDoc);
             }
         }
 
-        //tạo đối tượng
-        UserDoc userDoc = optional.get();
         BeanUtils.copyProperties(userSaveRequest, userDoc);
 
         LocalDateTime dob = utils.convertStringToLocalDateTime01(userSaveRequest.getDob());
@@ -165,13 +179,6 @@ public class UserServiceImpl implements UserService {
         userDoc.setCreatedAt(LocalDateTime.now());
         userDoc.setUpdatedAt(LocalDateTime.now());
 
-        //thay đổi khu vực nếu có
-        if(!userDoc.getAreas().get(0).getCode().equals(userSaveRequest.getAreaCodes().get(0))){
-            AreaDoc areaDoc = areaRepository.findByCode(userSaveRequest.getAreaCodes().get(0));
-            userDoc.getAreas().remove(0);
-            userDoc.getAreas().add(areaDoc);
-        }
-
         userRepository.save(userDoc);
     }
 
@@ -182,6 +189,8 @@ public class UserServiceImpl implements UserService {
         if (!StringUtils.isEmpty(userSearchRequest.getKeyword().toLowerCase().trim())) {
             Criteria orCriterias = new Criteria();
             List<Criteria> orExpressions  = new ArrayList<>();
+            orExpressions.add(Criteria.where("firstName").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
+            orExpressions.add(Criteria.where("lastName").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
             orExpressions.add(Criteria.where("email").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
             orExpressions.add(Criteria.where("phoneNumber").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
             orExpressions.add(Criteria.where("socialSecurityNum").regex(".*" + userSearchRequest.getKeyword().toLowerCase().trim() + ".*", "i"));
@@ -208,6 +217,9 @@ public class UserServiceImpl implements UserService {
         List<UserDoc> queryResults = mongoTemplate.find(query, UserDoc.class);
 
         List<UserDto> returnResults = new ArrayList<>();
+
+        UserDoc currentUser = WebUtils.getCurrentUser().getUser();
+        queryResults.remove(currentUser);
 
         for(UserDoc userDoc : queryResults){
             UserDto userDto = new UserDto();
@@ -251,6 +263,7 @@ public class UserServiceImpl implements UserService {
         if(userDoc.getDob() != null) userDto.setDob(utils.convertDateToString(userDoc.getDob()));
         for(AreaDoc areaDoc : userDoc.getAreas()){
             userDto.getAreas().add(areaDoc.getCode());
+            userDto.setAreaCode(areaDoc.getCode());
         }
         userDto.setRole(userDoc.getRole().getCode());
         userDto.setStatus(userDoc.getEnabled());

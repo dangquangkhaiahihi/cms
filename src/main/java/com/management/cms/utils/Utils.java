@@ -123,13 +123,13 @@ public class Utils {
         return request.getRemoteAddr();
     }
 
-    public static LocalDateTime convertStringToLocalDateTime01(String source) {
+    public static LocalDateTime convertStringToLocalDateTime01(String source) throws Exception{
         try {
             return Commons.DATE_FORMAT_01.parse(source).toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
-        return null;
     }
 
     public static String convertDateToString(LocalDateTime date) {

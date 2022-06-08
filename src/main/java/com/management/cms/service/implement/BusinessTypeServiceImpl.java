@@ -1,6 +1,7 @@
 package com.management.cms.service.implement;
 
 import com.management.cms.constant.Commons;
+import com.management.cms.model.enitity.AreaDoc;
 import com.management.cms.model.enitity.BusinessTypeDoc;
 import com.management.cms.model.request.BusinessTypeSaveRequest;
 import com.management.cms.model.request.BusinessTypeSearchRequest;
@@ -10,6 +11,8 @@ import com.management.cms.service.GeneratorSeqService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.support.MutableSortDefinition;
+import org.springframework.beans.support.PagedListHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -119,5 +122,24 @@ public class BusinessTypeServiceImpl implements BusinessTypeService {
         }
         businessTypeRepository.save(businessTypeDoc);
         return businessTypeDoc;
+    }
+
+    @Override
+    public List<BusinessTypeDoc> getAllActiveBusinessType() {
+        Query query = new Query();
+
+        query.addCriteria(Criteria.where("status").is(1));
+
+        List<BusinessTypeDoc> queryResults = mongoTemplate.find(query, BusinessTypeDoc.class);
+
+        PagedListHolder pagable = new PagedListHolder(queryResults);
+
+        MutableSortDefinition mutableSortDefinition = new MutableSortDefinition();
+        mutableSortDefinition.setAscending(true);
+        mutableSortDefinition.setIgnoreCase(true);
+        mutableSortDefinition.setProperty("code");
+        pagable.setSort(mutableSortDefinition);
+        pagable.resort();
+        return pagable.getPageList();
     }
 }

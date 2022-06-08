@@ -33,11 +33,6 @@ public class UserDetailsImpl implements UserDetails {
 
     public static UserDetailsImpl build(UserDoc user) {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        if (user.getRole() != null && !user.getRole().getPermissions().isEmpty()) {
-            authorities = user.getRole().getPermissions().stream()
-                    .map(permissionDoc -> new SimpleGrantedAuthority(permissionDoc.getCode()))
-                    .collect(Collectors.toList());
-        }
         return new UserDetailsImpl(user, authorities);
     }
 
