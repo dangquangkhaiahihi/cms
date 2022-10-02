@@ -1,28 +1,22 @@
 package com.management.cms.model.request;
 
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotBlank;
 
 @Data
 public class UserSaveRequest {
     private Long id;
-    @NotBlank(message = "Email không được trống")
     private String email;
-    @NotBlank(message = "Họ không được trống")
     private String firstName;
-    @NotBlank(message = "Tên không được trống")
     private String lastName;
-    @NotBlank(message = "Số điện thoại không được trống")
     private String phoneNumber;
-    @NotBlank(message = "Ngày sinh không được trống")
     private String dob;
-    @NotBlank(message = "Số căn cước công dân không được trống")
     private String socialSecurityNum;
-
     private String role;
-
     private String areaCode;
+    private MultipartFile photo;
 
     public void validateInput() throws Exception{
 

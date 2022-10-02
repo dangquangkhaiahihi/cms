@@ -44,7 +44,7 @@ public class BusinessTypeController {
 
 
     @PostMapping()
-    public ResponseEntity<?> save(@Validated @RequestBody BusinessTypeSaveRequest businessTypeSaveRequest) {
+    public ResponseEntity<?> save(@RequestBody BusinessTypeSaveRequest businessTypeSaveRequest) {
         try {
             BusinessTypeDoc businessTypeDoc = businessTypeService.createNewType(businessTypeSaveRequest);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);

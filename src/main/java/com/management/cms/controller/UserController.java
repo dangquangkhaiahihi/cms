@@ -36,7 +36,7 @@ public class UserController {
     Utils utils = new Utils();
 
     @PostMapping()
-    public ResponseEntity<?> save(@Validated @RequestBody UserSaveRequest userSaveRequest) {
+    public ResponseEntity<?> save(UserSaveRequest userSaveRequest) {
         try {
             userService.createNewUser(userSaveRequest);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);

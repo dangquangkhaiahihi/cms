@@ -54,7 +54,7 @@ public class BusinessPremisesController {
     }
 
     @PostMapping()
-    public ResponseEntity<?> save(@Validated @RequestBody BusinessPremisesSaveRequest businessPremisesSaveRequest) {
+    public ResponseEntity<?> save(@RequestBody BusinessPremisesSaveRequest businessPremisesSaveRequest) {
         try {
             String result = businessPremisesService.createNewBusinessPremises(businessPremisesSaveRequest);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
@@ -68,7 +68,7 @@ public class BusinessPremisesController {
     }
 
     @PostMapping("/{id}")
-    public ResponseEntity<?> edit(@Validated @RequestBody BusinessPremisesSaveRequest businessPremisesSaveRequest,
+    public ResponseEntity<?> edit(@RequestBody BusinessPremisesSaveRequest businessPremisesSaveRequest,
                                   @PathVariable Long id) {
         if(!id.equals(businessPremisesSaveRequest.getId())){
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_ERROR_99);
@@ -118,7 +118,7 @@ public class BusinessPremisesController {
     }
 
     @PutMapping("/update_inspect/{premisesId}")
-    public ResponseEntity<?> updateInspect(@Validated @RequestBody InspectRequest inspectRequest,
+    public ResponseEntity<?> updateInspect(@RequestBody InspectRequest inspectRequest,
                                                    @PathVariable Long premisesId) {
         try {
             String result = businessPremisesService.updateInspect(inspectRequest,premisesId);
@@ -153,4 +153,12 @@ public class BusinessPremisesController {
         baseResponse.setData(businessTypeDocs);
         return ResponseEntity.ok(baseResponse);
     }
+
+//    @GetMapping(value = "/getEmailsToSend")
+//    public ResponseEntity<?> getEmailsToSend(){
+//        List<String> emails = businessTypeService.getEmailsToSend();
+//        BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);
+//        baseResponse.setData(businessTypeDocs);
+//        return ResponseEntity.ok(baseResponse);
+//    }
 }

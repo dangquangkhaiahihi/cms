@@ -65,7 +65,7 @@ public class LoginController extends BaseController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Validated @RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
         log.info("Start loginRequest: {}", gson.toJson(loginRequest));
         try {
             Optional<UserDoc> optionalUser = userRepository.findByEmail(loginRequest.getUsername());

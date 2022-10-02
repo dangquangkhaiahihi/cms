@@ -48,7 +48,7 @@ public class AreaController {
 
 
     @PostMapping()
-    public ResponseEntity<?> save(@Validated @RequestBody AreaSaveRequest areaSaveRequest) {
+    public ResponseEntity<?> save(@RequestBody AreaSaveRequest areaSaveRequest) {
         try {
             AreaDoc areaDoc = areaService.createNewArea(areaSaveRequest);
             BaseResponse baseResponse = BaseResponse.parse(Commons.SVC_SUCCESS_00);

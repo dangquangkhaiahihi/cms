@@ -14,9 +14,9 @@ import com.management.cms.repository.*;
 import com.management.cms.service.AreaService;
 import com.management.cms.service.GeneratorSeqService;
 import com.management.cms.service.UserService;
+import com.management.cms.utils.FileUploadUtil;
 import com.management.cms.utils.Utils;
 import com.management.cms.utils.WebUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
@@ -29,6 +29,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -98,6 +99,9 @@ public class UserServiceImpl implements UserService {
 
         BeanUtils.copyProperties(userSaveRequest, userDoc);
 
+        String fileName = StringUtils.cleanPath(userSaveRequest.getPhoto().getOriginalFilename());
+        userDoc.setPhotoPath(fileName);
+
         LocalDateTime dob = utils.convertStringToLocalDateTime01(userSaveRequest.getDob());
         userDoc.setDob(dob);
 
@@ -116,6 +120,9 @@ public class UserServiceImpl implements UserService {
         //SET ID CHO USER TRƯỚC KHI LƯU
         userDoc.setId(generatorSeqService.getNextSequenceId(userDoc.SEQUENCE_NAME));
         userRepository.save(userDoc);
+
+        String uploadDir = "user-photos/" + userDoc.getId();
+        FileUploadUtil.saveFile(uploadDir, fileName, userSaveRequest.getPhoto());
 
 //        //Gửi mail tạo tài khoản cho user (chưa hoạt động)
 //        Map<String, Object> map = new HashMap<>();
@@ -267,7 +274,7 @@ public class UserServiceImpl implements UserService {
         }
         userDto.setRole(userDoc.getRole().getCode());
         userDto.setStatus(userDoc.getEnabled());
-
+        userDto.setPhoto(userDoc.getPhotosImagePath());
         return userDto;
     }
 

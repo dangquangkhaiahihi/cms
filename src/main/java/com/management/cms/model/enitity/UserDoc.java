@@ -35,10 +35,19 @@ public class UserDoc {
     private String createdBy;
     private String updatedBy;
 
+    private String photoPath;
+
     @DBRef(lazy = true)
     private List<AreaDoc> areas = new ArrayList<>();
 
     @DBRef(lazy = true)
     private RoleDoc role;
+
+    @Transient
+    public String getPhotosImagePath() {
+        if (photoPath == null || id == null) return null;
+
+        return "/user-photos/" + id + "/" + photoPath;
+    }
 }
 
