@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/test_deploy")
 public class TestDeploy {
     //    @PreAuthorize("@permissionServiceImpl.businessPremisesView")
     @GetMapping("/view")
